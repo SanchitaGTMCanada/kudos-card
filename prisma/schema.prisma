@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum UserRole {
+  EMPLOYEE
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum KudosStatus {
+  ACTIVE
+  HIDDEN
+}
+
+model Department {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+
+  @@map("departments")
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  employeeId   String     @unique
+  name         String
+  email        String     @unique
+  passwordHash String
+  designation  String?
+  profileImage String?
+  role         UserRole   @default(EMPLOYEE)
+  status       UserStatus @default(ACTIVE)
+
+  departmentId Int?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  kudosGiven   Kudos[] @relation("KudosSender")
+  kudosReceived Kudos[] @relation("KudosReceiver")
+
+  reactions    KudosReaction[]
+  notifications Notification[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([departmentId])
+  @@map("users")
+}
+
+model KudosCategory {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  icon        String?
+  isActive    Boolean  @default(true)
+
+  kudos       Kudos[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("kudos_categories")
+}
+
+model Kudos {
+  id          Int         @id @default(autoincrement())
+
+  senderId    Int
+  receiverId  Int
+  categoryId  Int
+
+  message     String      @db.Text
+  status      KudosStatus @default(ACTIVE)
+
+  sender      User        @relation("KudosSender", fields: [senderId], references: [id])
+  receiver    User        @relation("KudosReceiver", fields: [receiverId], references: [id])
+  category    KudosCategory @relation(fields: [categoryId], references: [id])
+
+  reactions   KudosReaction[]
+  notifications Notification[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([categoryId])
+  @@index([createdAt])
+  @@map("kudos")
+}
+
+model KudosReaction {
+  id        Int      @id @default(autoincrement())
+
+  kudosId   Int
+  userId    Int
+  reaction  String
+
+  kudos     Kudos    @relation(fields: [kudosId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([kudosId, userId, reaction])
+  @@index([kudosId])
+  @@index([userId])
+  @@map("kudos_reactions")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+
+  userId    Int
+  kudosId   Int?
+
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kudos     Kudos?   @relation(fields: [kudosId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([kudosId])
+  @@index([isRead])
+  @@map("notifications")
+}
