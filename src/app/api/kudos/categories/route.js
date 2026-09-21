@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
@@ -12,26 +13,45 @@ export async function GET() {
           success: false,
           message: "Not authenticated",
         },
-        { status: 401 }
+        {
+          status: 401,
+        }
       );
     }
 
+    const categories = await prisma.kudosCategory.findMany({
+      where: {
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        icon: true,
+      },
+      orderBy: {
+        id: "asc",
+      },
+    });
+
     return NextResponse.json({
       success: true,
-      user,
+      categories,
     });
   } catch (error) {
     console.error(
-      "GET /api/auth/me error:",
+      "GET /api/kudos/categories error:",
       error
     );
 
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to load current user",
+        message: "Failed to load Kudos categories",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }

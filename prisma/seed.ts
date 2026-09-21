@@ -3,7 +3,14 @@ import crypto from "crypto";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../src/generated/prisma/client";
 
-const adapter = new PrismaMariaDb(process.env.DATABASE_URL!);
+const adapter = new PrismaMariaDb({
+  host: process.env.DATABASE_HOST || "127.0.0.1",
+  port: Number(process.env.DATABASE_PORT || 3306),
+  user: process.env.DATABASE_USER || "root",
+  password: process.env.DATABASE_PASSWORD || "",
+  database: process.env.DATABASE_NAME || "kudos_card",
+  connectionLimit: 1,
+});
 
 const prisma = new PrismaClient({
   adapter,
@@ -17,11 +24,11 @@ function hashPassword(password: string) {
 }
 
 async function main() {
-  console.log("Creating test employee...");
+  console.log("Creating test employees...");
 
   const password = "Kudos@123";
 
-  const user = await prisma.user.upsert({
+  const sanchita = await prisma.user.upsert({
     where: {
       employeeId: "EMP001",
     },
@@ -46,14 +53,50 @@ async function main() {
     },
   });
 
+  const rahul = await prisma.user.upsert({
+    where: {
+      employeeId: "EMP002",
+    },
+
+    update: {
+      name: "Rahul Sharma",
+      email: "rahul@example.com",
+      passwordHash: hashPassword(password),
+      designation: "Software Engineer",
+      role: "EMPLOYEE",
+      status: "ACTIVE",
+    },
+
+    create: {
+      employeeId: "EMP002",
+      name: "Rahul Sharma",
+      email: "rahul@example.com",
+      passwordHash: hashPassword(password),
+      designation: "Software Engineer",
+      role: "EMPLOYEE",
+      status: "ACTIVE",
+    },
+  });
+
   console.log("");
   console.log("=================================");
-  console.log("Employee created successfully");
+  console.log("Employees created successfully");
   console.log("=================================");
-  console.log(`Employee ID : ${user.employeeId}`);
-  console.log(`Name        : ${user.name}`);
-  console.log(`Email       : ${user.email}`);
-  console.log(`Password    : ${password}`);
+
+  console.log(`Employee 1 : ${sanchita.employeeId}`);
+  console.log(`Name       : ${sanchita.name}`);
+  console.log(`Email      : ${sanchita.email}`);
+
+  console.log("");
+
+  console.log(`Employee 2 : ${rahul.employeeId}`);
+  console.log(`Name       : ${rahul.name}`);
+  console.log(`Email      : ${rahul.email}`);
+
+  console.log("");
+
+  console.log(`Password   : ${password}`);
+
   console.log("=================================");
   console.log("");
 }

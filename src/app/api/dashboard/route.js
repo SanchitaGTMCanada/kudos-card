@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -12,35 +13,62 @@ export async function GET() {
           success: false,
           message: "Not authenticated",
         },
-        { status: 401 }
+        {
+          status: 401,
+        }
       );
     }
 
-    const startOfMonth = new Date();
+    // ---------------------------------------
+    // Start of current month
+    // ---------------------------------------
 
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
+    const now = new Date();
 
-    // Total Kudos given by current user
+    const startOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1,
+      0,
+      0,
+      0,
+      0
+    );
+
+    // ---------------------------------------
+    // Total Kudos given
+    // ---------------------------------------
+
     const totalGiven = await prisma.kudos.count({
       where: {
         senderId: user.id,
+        status: "ACTIVE",
       },
     });
 
-    // Total Kudos received by current user
+    // ---------------------------------------
+    // Total Kudos received
+    // ---------------------------------------
+
     const totalReceived = await prisma.kudos.count({
       where: {
         receiverId: user.id,
+        status: "ACTIVE",
       },
     });
 
-    // Kudos received/given this month
+    // ---------------------------------------
+    // Kudos this month
+    // ---------------------------------------
+
     const thisMonth = await prisma.kudos.count({
       where: {
+        status: "ACTIVE",
+
         createdAt: {
           gte: startOfMonth,
         },
+
         OR: [
           {
             senderId: user.id,
@@ -52,9 +80,14 @@ export async function GET() {
       },
     });
 
+    // ---------------------------------------
     // Recent Kudos
+    // ---------------------------------------
+
     const recentKudos = await prisma.kudos.findMany({
       where: {
+        status: "ACTIVE",
+
         OR: [
           {
             senderId: user.id,
@@ -64,10 +97,13 @@ export async function GET() {
           },
         ],
       },
+
       orderBy: {
         createdAt: "desc",
       },
+
       take: 5,
+
       include: {
         sender: {
           select: {
@@ -78,6 +114,7 @@ export async function GET() {
             designation: true,
           },
         },
+
         receiver: {
           select: {
             id: true,
@@ -87,6 +124,7 @@ export async function GET() {
             designation: true,
           },
         },
+
         category: {
           select: {
             id: true,
@@ -94,8 +132,80 @@ export async function GET() {
             icon: true,
           },
         },
+
+        reactions: {
+          select: {
+            id: true,
+            userId: true,
+            reaction: true,
+          },
+        },
       },
     });
+
+    // ---------------------------------------
+    // Format recent Kudos
+    // ---------------------------------------
+
+    const formattedRecentKudos = recentKudos.map((item) => {
+      const reactionCounts = {
+        heart: 0,
+        clap: 0,
+        fire: 0,
+      };
+
+      item.reactions.forEach((reaction) => {
+        const type = reaction.reaction?.toLowerCase();
+
+        if (type === "heart") {
+          reactionCounts.heart += 1;
+        }
+
+        if (type === "clap") {
+          reactionCounts.clap += 1;
+        }
+
+        if (type === "fire") {
+          reactionCounts.fire += 1;
+        }
+      });
+
+      return {
+        id: item.id,
+
+        message: item.message,
+
+        createdAt: item.createdAt,
+
+        category: {
+          id: item.category.id,
+          name: item.category.name,
+          icon: item.category.icon,
+        },
+
+        sender: {
+          id: item.sender.id,
+          name: item.sender.name,
+          employeeId: item.sender.employeeId,
+          profileImage: item.sender.profileImage,
+          designation: item.sender.designation,
+        },
+
+        receiver: {
+          id: item.receiver.id,
+          name: item.receiver.name,
+          employeeId: item.receiver.employeeId,
+          profileImage: item.receiver.profileImage,
+          designation: item.receiver.designation,
+        },
+
+        reactions: reactionCounts,
+      };
+    });
+
+    // ---------------------------------------
+    // Response
+    // ---------------------------------------
 
     return NextResponse.json({
       success: true,
@@ -106,7 +216,7 @@ export async function GET() {
         thisMonth,
       },
 
-      recentKudos,
+      recentKudos: formattedRecentKudos,
     });
   } catch (error) {
     console.error("GET /api/dashboard error:", error);
@@ -116,7 +226,9 @@ export async function GET() {
         success: false,
         message: "Failed to load dashboard data",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }
