@@ -3,20 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-  "dev": "next dev",
-  "build": "prisma generate && next build",
-  "db:seed": "node prisma/seed.ts",
-  "start": "next start",
-  "lint": "eslint"
-},
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "db:seed": "node prisma/seed.ts",
+    "start": "next start",
+    "lint": "eslint"
+  },
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "lucide-react": "^1.31.0",
     "next": "16.3.1",
+    "nodemailer": "^10.0.10",
     "prisma": "^7.9.1",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "sweetalert2": "^11.26.25"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
