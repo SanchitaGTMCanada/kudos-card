@@ -1,8 +1,16 @@
+
 import Link from "next/link";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import {
+  ArrowUpRight,
+  Sparkles,
+  ShieldCheck,
+} from "lucide-react";
 
 export default function WelcomeSection({ user }) {
-  const firstName = user?.name?.trim()?.split(/\s+/)[0] || "there";
+  const firstName =
+    user?.name?.trim()?.split(/\s+/)[0] || "there";
+
+  const isAdmin = user?.role === "ADMIN";
 
   return (
     <section className="mb-8 overflow-hidden rounded-[28px] border border-[#E8EAF0] bg-white">
@@ -33,23 +41,49 @@ export default function WelcomeSection({ user }) {
 
           </div>
 
-          {/* Give Kudos */}
-          <Link
-            href="/give-kudos"
-            className="group inline-flex shrink-0 items-center justify-center gap-3 rounded-xl bg-[#5B3CC4] px-6 py-3.5 text-sm font-bold text-white shadow-[0_12px_30px_rgba(91,60,196,0.22)] transition hover:-translate-y-0.5 hover:bg-[#4D32AD]"
-          >
-            <Sparkles size={17} />
+          {/* Actions */}
+          <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
 
-            Give Kudos
+            {/* HR Panel */}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="group inline-flex items-center justify-center gap-2.5 rounded-xl border border-[#DDD5FF] bg-[#F7F5FF] px-5 py-3.5 text-sm font-bold text-[#5B3CC4] transition hover:-translate-y-0.5 hover:border-[#CFC3FF] hover:bg-[#F1EEFF]"
+              >
+                <ShieldCheck
+                  size={17}
+                  className="transition-transform group-hover:scale-105"
+                />
 
-            <ArrowUpRight
-              size={16}
-              className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-            />
-          </Link>
+                HR Panel
+
+                <ArrowUpRight
+                  size={16}
+                  className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                />
+              </Link>
+            )}
+
+            {/* Give Kudos */}
+            <Link
+              href="/give-kudos"
+              className="group inline-flex items-center justify-center gap-3 rounded-xl bg-[#5B3CC4] px-6 py-3.5 text-sm font-bold text-white shadow-[0_12px_30px_rgba(91,60,196,0.22)] transition hover:-translate-y-0.5 hover:bg-[#4D32AD]"
+            >
+              <Sparkles size={17} />
+
+              Give Kudos
+
+              <ArrowUpRight
+                size={16}
+                className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              />
+            </Link>
+
+          </div>
 
         </div>
       </div>
     </section>
   );
 }
+
